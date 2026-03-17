@@ -45,20 +45,33 @@
 #define SOLUTION 1
 
 typedef struct {
-    uint32_t size;
-    uint32_t position_x;
-    uint32_t position_y;
-    uint32_t speed;
-
-} Square;
-
-typedef struct {
     uint16_t x;
     uint16_t y;
 } Speed;
 
-Square worm[50] = {{20, 240, 160},
-    {20, 220, 160}};
+typedef struct {
+    uint16_t x;
+    uint16_t y;
+} Point;
+
+typedef struct {
+    uint32_t size;
+    Point position;
+    Speed speed;
+
+} Square;
+
+typedef struct {
+    Point point;
+    Speed speed;
+    int numTurned;
+} TurningPoint;
+
+TurningPoint turningPoints[100];
+volatile int num_points = 0;
+
+Square worm[50] = {{20, {240, 160}, {20, 0}},
+    {20, {220, 160}, {20, 0}}};
 int wormLength = 2;
 
 int center_x = 240;
@@ -68,11 +81,17 @@ Speed speed = {20,0};
 
 __attribute__((interrupt("machine")))
 void systick_handler() {
-    for (int i = 0; i <= wormLength; i++) {
-        tft_rect(worm[i].position_x, worm[i].position_y, worm[i].size, worm[i].size, COLOR_BLACK, 1);
-        worm[i].position_x += speed.x;
-        worm[i].position_y += speed.y;
-        tft_rect(worm[i].position_x, worm[i].position_y, worm[i].size, worm[i].size, COLOR_WHITE, 1);
+    for (int i = 0; i < wormLength; i++) {
+        for (int j = 0; j < num_points; j++) {
+            if (worm[i].position.x == turningPoints[j].point.x && worm[i].position.y == turningPoints[j].point.y) {
+                worm[i].speed = turningPoints[j].speed;
+                turningPoints[j].numTurned += 1;
+            }
+        }
+        tft_rect(worm[i].position.x, worm[i].position.y, worm[i].size, worm[i].size, COLOR_BLACK, 1);
+        worm[i].position.x += worm[i].speed.x;
+        worm[i].position.y += worm[i].speed.y;
+        tft_rect(worm[i].position.x, worm[i].position.y, worm[i].size, worm[i].size, COLOR_WHITE, 1);
     }
     systick->SR = 1;
 }
@@ -81,26 +100,32 @@ __attribute__((interrupt("machine")))
 void exti_handler() {
     int input = get_keyboard_button();
     //WASD-esque layout for comfortable inputs
+    TurningPoint p;
+    p.point.x = worm[0].position.x;
+    p.point.y = worm[0].position.y;
+    p.numTurned = 0;
     if (input == 1) {
         //up
-        speed.y = 20;
-        speed.x = 0;
+        p.speed.y = 20;
+        p.speed.x = 0;
     }
     else if (input == 4) {
         //left
-        speed.x = 20;
-        speed.y = 0;
+        p.speed.x = 20;
+        p.speed.y = 0;
     }
     else if (input == 5) {
         //down
-        speed.y = -20;
-        speed.x = 0;
+        p.speed.y = -20;
+        p.speed.x = 0;
     }
     else if (input == 6) {
         //right
-        speed.x = -20;
-        speed.y = 0;
+        p.speed.x = -20;
+        p.speed.y = 0;
     }
+    turningPoints[num_points] = p;
+    num_points += 1;
     *EXTI_INTFR = 0xFFFFFFFF;
 }
 
@@ -108,6 +133,7 @@ int main(void)
 {
     init_interrupts();
     init_systick();
+
     ///////////////////////////////////////////////////////////////////////////
     // Assignment 1: Initialize the display and fill it with a solid color
     // =======================================================================
@@ -121,6 +147,10 @@ int main(void)
     // <your code here>
     tft_init();
     tft_rect(0, 0, 479, 319, COLOR_BLACK, 1);
+
+    volatile int test = num_points;
+
+    printf("%d", test);
     
     
     ///////////////////////////////////////////////////////////////////////////
@@ -162,8 +192,16 @@ int main(void)
     // - When you run this on hardware, timings might be very different. 
     ///////////////////////////////////////////////////////////////////////////
     systick->CTLR |=1;
-    if (systick->CTLR != 0)
     while(1) {
+        for (int k = 0; k < num_points; k++) {
+            if (turningPoints[k].numTurned == wormLength) {
+                for (int a = k + 1; a < num_points; a++) {
+                    turningPoints[a-1] = turningPoints[a];
+                }
+                num_points -= 1;
+            }
+            
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////

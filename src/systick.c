@@ -7,7 +7,7 @@
 
 void init_systick() {
     STK->SR = 1;
-    STK->CMPLR = 72000000;
+    STK->CMPLR = 720000;
     STK->CMPHR = 0;
     STK->CTLR = 0b101110;
 

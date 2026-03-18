@@ -85,42 +85,44 @@ void exti_handler() {
     p.numTurned = 0;
     if (input == 1) {
         //up
-        p.speed.y = 20;
+        p.speed.y = -20;
         p.speed.x = 0;
     }
     else if (input == 4) {
         //left
-        p.speed.x = 20;
+        p.speed.x = -20;
         p.speed.y = 0;
     }
     else if (input == 5) {
         //down
-        p.speed.y = -20;
+        p.speed.y = 20;
         p.speed.x = 0;
     }
     else if (input == 6) {
         //right
-        p.speed.x = -20;
+        p.speed.x = 20;
         p.speed.y = 0;
     }
     turningPoints[num_points] = p;
+    worm[0].speed = p.speed;
     num_points += 1;
+
     *EXTI_INTFR = 0xFFFFFFFF;
     
 }
 
 int main(void)
 {
-    init_interrupts();
     init_systick();
     
     init_vector_table();
+    init_interrupts();
     tft_init();
     tft_rect(0, 0, 479, 319, COLOR_BLACK, 1);
 
     
     
-    STK->CTLR |=1;
+    systick_start();
     while(1) {
         for (int k = 0; k < num_points; k++) {
             if (turningPoints[k].numTurned == wormLength) {

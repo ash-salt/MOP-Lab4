@@ -37,7 +37,7 @@ TFTLIB_OBJ_SIM  := $(TFTLIB_SRCS_SIM:%=$(OBJ_DIR)/sim/%.o)
 TFTLIB_OBJ_HW   := $(TFTLIB_SRCS_HW:%=$(OBJ_DIR)/hw/%.o)
 
 # ── Main program sources (only main.c + startup.s remain in src/) ─────
-MAIN_SRCS := src/main.c src/startup.s
+MAIN_SRCS := src/main.c src/startup.s src/keypad.c src/systick.c src/keyboard.c src/interrupts.c src/vector_table.s
 MAIN_OBJS := $(MAIN_SRCS:%=$(OBJ_DIR)/%.o)
 
 DEPS := $(MAIN_OBJS:.o=.d) $(TFTLIB_OBJ_SIM:.o=.d) $(TFTLIB_OBJ_HW:.o=.d)

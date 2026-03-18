@@ -1,20 +1,18 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include "systick.h"
 
 
-typedef struct {
-    uint32_t CTLR;
-    uint32_t SR;
-    uint64_t CNT;
-    uint64_t CMP;
-} SysTick;
-
-SysTick* systick = (SysTick*) 0xE000F000;
 
 void init_systick() {
-    systick->SR = 1;
-    systick->CTLR = 0b101110;
-    systick->CMP = 72000000;
+    STK->SR = 1;
+    STK->CMPLR = 72000000;
+    STK->CMPHR = 0;
+    STK->CTLR = 0b101110;
 
+}
+
+void systick_start() {
+    STK->CTLR |= 1;
 }
